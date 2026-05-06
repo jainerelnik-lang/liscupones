@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ruleta de Premios</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; text-align: center; background: #f4f4f9; margin: 0; padding-bottom: 50px; }
+        .user-info { background: #333; color: white; padding: 10px 15px; display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap; gap: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .action-btns { display: flex; gap: 8px; align-items: center; }
+        .btn-nav { padding: 6px 12px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.85em; transition: 0.3s; }
+        .btn-admin { background: #007bff; color: white; }
+        .btn-staff { background: #28a745; color: white; }
+        .btn-token { background: #6f42c1; color: white; }
+        .btn-salir { background: #d9534f; color: white; }
+        .btn-nav:hover { opacity: 0.8; transform: translateY(-1px); }
+
+        .container { max-width: 750px; margin: 20px auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .wheel-box { position: relative; width: 300px; height: 300px; margin: 20px auto; }
+        #canvas-ruleta { width: 100%; height: 100%; transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1); }
+        .marker { position: absolute; top: 50%; right: -20px; transform: translateY(-50%); border-top: 15px solid transparent; border-bottom: 15px solid transparent; border-right: 30px solid #d9534f; z-index: 10; width:0; height:0; }
+        
+        #btn-girar { background: #28a745; color: white; padding: 15px 30px; border: none; border-radius: 8px; font-size: 1.2em; cursor: pointer; box-shadow: 0 4px 0 #1e7e34; }
+        #btn-girar:disabled { background: #ccc; cursor: not-allowed; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 30px; font-size: 0.85em; }
+        th, td { border: 1px solid #eee; padding: 12px 5px; }
+        th { background: #f8f9fa; }
+        
+        .cupon-id { font-family: monospace; font-weight: bold; color: #007bff; background: #eef6ff; padding: 3px 6px; border-radius: 4px; border: 1px dashed #007bff; }
+        .info-txt { font-size: 0.85em; color: #666; font-style: italic; max-width: 150px; }
+        
+        .vence-ok { color: #28a745; font-weight: bold; }
+        .vence-espera { color: #fd7e14; font-weight: bold; }
+        .vence-alerta { color: #d9534f; font-weight: bold; }
+
+        .btn-regalar { background: #17a2b8; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 0.85em; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="user-info">
+    <span><b>ID:</b> <span id="u-id"></span></span>
+    <span><b>Hola,</b> <span id="u-name"></span></span>
+    <div class="action-btns">
+        <button id="btn-admin-link" class="btn-nav btn-admin" onclick="location.href='admin.html'" style="display:none">Admin</button>
+        <button id="btn-validar-link" class="btn-nav btn-staff" onclick="location.href='validar.html'" style="display:none">Validar</button>
+        <button id="btn-token-link" class="btn-nav btn-token" onclick="generarToken()" style="display:none">Token</button>
+        <button class="btn-nav btn-salir" onclick="cerrar()">Salir</button>
+    </div>
+</div>
+
+<div class="container">
+    <div class="wheel-box">
+        <div class="marker"></div>
+        <canvas id="canvas-ruleta" width="300" height="300"></canvas>
+    </div>
+    <button id="btn-girar" onclick="iniciarGiro()" disabled>Cargando...</button>
+    <p id="mensaje-estado"></p>
+
+    <h3>Mis Cupones</h3>
+    <table id="lista-cupones">
+        <thead>
+            <tr>
+                <th>Código</th>
+                <th>Premio</th>
+                <th>Detalles</th>
+                <th>Vigencia</th>
+                <th>Acción</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyY2avo8Y55W28Fxpjy2UZBb_SwIRBcbiGzS5uV0SLEX0VArFaLYblt9gkYP2mqF0h2/exec";
+    const uId = localStorage.getItem('userId');
+    const uName = localStorage.getItem('usuario');
+    const uRol = localStorage.getItem('rol');
+
+    if (!localStorage.getItem('sesionActiva')) window.location.href = "index.html";
+    document.getElementById('u-id').innerText = uId;
+    document.getElementById('u-name').innerText = uName;
+
+    if (uRol === 'ADMIN' || uRol === 'STAFF') {
+        document.getElementById('btn-token-link').style.display = 'inline-block';
+        document.getElementById('btn-validar-link').style.display = 'inline-block';
+        if (uRol === 'ADMIN') document.getElementById('btn-admin-link').style.display = 'inline-block';
+    }
+
+    let listaPremios = [];
+    const colores = ["#f1c40f", "#e67e22", "#e74c3c", "#9b59b6", "#3498db", "#2ecc71", "#1abc9c", "#34495e"];
+
+    function cerrar() { if(confirm("¿Salir?")) { localStorage.clear(); window.location.href = "index.html"; } }
+
+    async function generarToken() {
+        if(!confirm("¿Generar nuevo token?")) return;
+        const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'create_token', username: uName }) });
+        const data = await res.json();
+        if(data.success) alert("TOKEN: " + data.token);
+    }
+
+    function dibujar(premios) {
+        const ctx = document.getElementById('canvas-ruleta').getContext('2d');
+        const arco = (2 * Math.PI) / premios.length;
+        ctx.clearRect(0, 0, 300, 300);
+        premios.forEach((p, i) => {
+            ctx.beginPath(); ctx.fillStyle = colores[i % colores.length]; ctx.moveTo(150, 150);
+            ctx.arc(150, 150, 150, i * arco, (i + 1) * arco); ctx.fill();
+            ctx.save(); ctx.translate(150, 150); ctx.rotate(i * arco + arco / 2);
+            ctx.fillStyle = "white"; ctx.font = "bold 11px Arial"; ctx.textAlign = "right"; ctx.fillText(p, 140, 5); ctx.restore();
+        });
+    }
+
+    async function cargar() {
+        const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'get_user_data', userId: uId }) });
+        const data = await res.json();
+        
+        if (data.premiosRuleta) {
+            listaPremios = data.premiosRuleta;
+            dibujar(listaPremios);
+            document.getElementById('btn-girar').innerText = "GIRAR";
+            if (!data.yaGiroHoy) document.getElementById('btn-girar').disabled = false;
+        }
+        if (data.yaGiroHoy) document.getElementById('mensaje-estado').innerText = "Ya giraste hoy.";
+
+        if (data.cupones) data.cupones.sort((a, b) => new Date(a.vencimiento) - new Date(b.vencimiento));
+
+        const tbody = document.querySelector('#lista-cupones tbody');
+        tbody.innerHTML = data.cupones.map(c => {
+            const dias = Math.ceil((new Date(c.vencimiento) - new Date()) / (1000*60*60*24));
+            let clase = dias > 2 ? 'vence-ok' : (dias > 0 ? 'vence-espera' : 'vence-alerta');
+            let btnRegalo = c.estado === 'ACTIVO' ? `<button class="btn-regalar" onclick="regalar('${c.id}')">Regalar</button>` : 'USADO';
+            
+            return `<tr>
+                <td><span class="cupon-id">${c.id}</span></td>
+                <td>${c.premio}</td>
+                <td class="info-txt">${c.info}</td>
+                <td class="${clase}">${dias > 0 ? dias + ' d' : '¡Hoy!'}</td>
+                <td>${btnRegalo}</td>
+            </tr>`;
+        }).join('') || "<tr><td colspan='5'>Sin cupones</td></tr>";
+    }
+
+    async function regalar(cuponId) {
+        const targetId = prompt("Ingresa el ID del usuario destino:");
+        if (!targetId || targetId === uId) return;
+
+        const res = await fetch(SCRIPT_URL, { 
+            method: 'POST', 
+            body: JSON.stringify({ action: 'gift_coupon', cuponId: cuponId, targetId: targetId, username: uName }) 
+        });
+        const data = await res.json();
+        alert(data.message);
+        if (data.success) location.reload();
+    }
+
+    async function iniciarGiro() {
+        const g = 1800 + Math.floor(Math.random() * 360);
+        document.getElementById('canvas-ruleta').style.transform = `rotate(${g}deg)`;
+        document.getElementById('btn-girar').disabled = true;
+        setTimeout(async () => {
+            const idx = Math.floor(((360 - (g % 360)) % 360) / (360 / listaPremios.length));
+            const p = listaPremios[idx];
+            const promesaGuardado = fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'save_prize', userId: uId, username: uName, prize: p }) });
+            alert("¡Ganaste: " + p + "!");
+            await promesaGuardado;
+            location.reload();
+        }, 4000);
+    }
+    cargar();
+</script>
+</body>
+</html>

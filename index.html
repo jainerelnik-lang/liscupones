@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceso - Sistema de Cupones</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f4f9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 320px; text-align: center; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background-color: #28a745; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1em; transition: 0.3s; }
+        button:hover { background-color: #218838; }
+        .toggle-link { color: #007bff; cursor: pointer; font-size: 0.9em; margin-top: 15px; display: block; text-decoration: underline; }
+        .hidden { display: none; }
+        #mensaje { margin-top: 15px; font-weight: bold; font-size: 0.9em; min-height: 20px; }
+        .info-text { font-size: 0.8em; color: #666; margin: 10px 0; text-align: left; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2 id="titulo">Iniciar Sesión</h2>
+    
+    <!-- Formulario de Login -->
+    <div id="loginForm">
+        <input type="text" id="loginUser" placeholder="Nombre de usuario">
+        <input type="password" id="loginPass" placeholder="Contraseña">
+        <button onclick="iniciarSesion()">Entrar</button>
+        <span class="toggle-link" onclick="toggleForm('registro')">¿Eres nuevo? Regístrate con tu Token</span>
+    </div>
+
+    <!-- Formulario de Registro (RECUPERADO) -->
+    <div id="registroForm" class="hidden">
+        <input type="text" id="regUser" placeholder="Elige un usuario">
+        <input type="password" id="regPass" placeholder="Crea tu contraseña">
+        <input type="password" id="regPassConfirm" placeholder="Confirma tu contraseña">
+        <input type="text" id="regToken" placeholder="Token de invitación">
+        
+        <div class="info-text">
+            * La contraseña debe tener entre 5 y 10 caracteres.<br>
+            * No puede empezar con el número 0.
+        </div>
+        
+        <button onclick="registrarUsuario()">Crear Cuenta</button>
+        <span class="toggle-link" onclick="toggleForm('login')">Volver al inicio de sesión</span>
+    </div>
+
+    <div id="mensaje"></div>
+</div>
+
+<script src="script.js"></script>
+
+</body>
+</html>

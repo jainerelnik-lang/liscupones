@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Validar Cupón - Gestión de Tienda</title>
+    <style>
+        :root { --primary: #007bff; --success: #28a745; --danger: #d9534f; --dark: #333; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; text-align: center; padding: 20px; margin: 0; }
+        .card { background: white; max-width: 450px; margin: auto; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        
+        h2 { color: var(--dark); margin-bottom: 10px; }
+        .instrucciones { color: #666; font-size: 0.9em; margin-bottom: 20px; }
+
+        input { width: 100%; padding: 15px; font-size: 1.3em; border: 2px solid #ddd; border-radius: 10px; box-sizing: border-box; text-align: center; margin-bottom: 15px; transition: 0.3s; }
+        input:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 8px rgba(0,123,255,0.2); }
+
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 1em; transition: 0.3s; margin-bottom: 10px; }
+        .btn-search { background: var(--dark); color: white; }
+        .btn-redeem { background: var(--success); color: white; display: none; font-size: 1.1em; }
+        .btn:disabled { background: #ccc; cursor: not-allowed; }
+
+        /* Ficha de Información */
+        #info-cupon { display: none; background: #f8f9fa; border: 1px solid #eee; border-radius: 12px; padding: 20px; text-align: left; margin-top: 20px; animation: fadeIn 0.4s; }
+        .info-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f1f1f1; }
+        .info-label { font-weight: bold; color: #555; }
+        .info-value { color: #000; }
+        
+        .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 0.8em; font-weight: bold; }
+        .status-activo { background: #e6ffed; color: #28a745; border: 1px solid #28a745; }
+        .status-usado { background: #fff5f5; color: #d9534f; border: 1px solid #d9534f; }
+
+        .back-btn { margin-top: 20px; display: inline-block; color: #666; text-decoration: none; font-weight: bold; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2>Validar Premio</h2>
+        <p class="instrucciones">Busca el cupón para verificar los datos antes de entregarlo.</p>
+        
+        <input type="text" id="inputCupon" placeholder="CUP-XXXXXX">
+        <button id="btnBuscar" class="btn btn-search" onclick="buscarCupon()">BUSCAR CUPÓN</button>
+
+        <!-- Ficha de Datos (Oculta por defecto) -->
+        <div id="info-cupon">
+            <div class="info-row"><span class="info-label">ID Cupón:</span> <span id="res-id" class="info-value"></span></div>
+            <div class="info-row"><span class="info-label">Usuario:</span> <span id="res-user" class="info-value"></span></div>
+            <div class="info-row"><span class="info-label">Premio:</span> <span id="res-premio" class="info-value" style="color:var(--primary); font-weight:bold;"></span></div>
+            <div class="info-row"><span class="info-label">Adquirido:</span> <span id="res-fecha" class="info-value"></span></div>
+            <div class="info-row"><span class="info-label">Vence:</span> <span id="res-vence" class="info-value"></span></div>
+            <div class="info-row"><span class="info-label">Estado:</span> <span id="res-status" class="status-badge"></span></div>
+            
+            <div style="margin-top: 20px;">
+                <button id="btnCanjear" class="btn btn-redeem" onclick="canjearCupon()">CONFIRMAR ENTREGA DE PREMIO</button>
+            </div>
+        </div>
+
+        <div id="mensaje-global" style="margin-top:20px; font-weight:bold;"></div>
+        
+        <a href="ruleta.html" class="back-btn">← Volver a la Ruleta</a>
+    </div>
+
+    <script>
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyY2avo8Y55W28Fxpjy2UZBb_SwIRBcbiGzS5uV0SLEX0VArFaLYblt9gkYP2mqF0h2/exec";
+        
+        // SEGURIDAD: Solo Staff y Admin
+        const rol = localStorage.getItem('rol');
+        const trabajador = localStorage.getItem('usuario');
+        if (rol !== 'ADMIN' && rol !== 'STAFF') window.location.href = "ruleta.html";
+
+        function limpiarInterfaz() {
+            document.getElementById('info-cupon').style.display = 'none';
+            document.getElementById('btnCanjear').style.display = 'none';
+            document.getElementById('mensaje-global').innerText = "";
+        }
+
+        async function buscarCupon() {
+            const id = document.getElementById('inputCupon').value.trim();
+            if (!id) return alert("Ingresa un código");
+
+            limpiarInterfaz();
+            const btn = document.getElementById('btnBuscar');
+            btn.disabled = true;
+            btn.innerText = "Buscando...";
+
+            try {
+                const res = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'check_coupon', cuponId: id })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    // Llenar Ficha
+                    document.getElementById('res-id').innerText = data.datos.id;
+                    document.getElementById('res-user').innerText = data.datos.duenio;
+                    document.getElementById('res-premio').innerText = data.datos.premio;
+                    document.getElementById('res-fecha').innerText = new Date(data.datos.creado).toLocaleDateString();
+                    document.getElementById('res-vence').innerText = new Date(data.datos.vence).toLocaleDateString();
+                    
+                    const statusBadge = document.getElementById('res-status');
+                    statusBadge.innerText = data.datos.estado;
+                    statusBadge.className = data.datos.estado === 'ACTIVO' ? 'status-badge status-activo' : 'status-badge status-usado';
+
+                    document.getElementById('info-cupon').style.display = 'block';
+                    
+                    // Mostrar botón de canje solo si está activo
+                    if (data.datos.estado === 'ACTIVO') {
+                        document.getElementById('btnCanjear').style.display = 'block';
+                    }
+                } else {
+                    document.getElementById('mensaje-global').style.color = "red";
+                    document.getElementById('mensaje-global').innerText = data.message;
+                }
+            } catch (e) {
+                alert("Error de conexión");
+            }
+            btn.disabled = false;
+            btn.innerText = "BUSCAR CUPÓN";
+        }
+
+        async function canjearCupon() {
+            const id = document.getElementById('res-id').innerText;
+            if (!confirm("¿Seguro que deseas marcar este premio como ENTREGADO?")) return;
+
+            const btn = document.getElementById('btnCanjear');
+            btn.disabled = true;
+            btn.innerText = "Procesando canje...";
+
+            try {
+                const res = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ 
+                        action: 'redeem_coupon', 
+                        cuponId: id, 
+                        username: trabajador 
+                    })
+                });
+                const data = await res.json();
+                
+                alert(data.message);
+                if (data.success) {
+                    document.getElementById('inputCupon').value = "";
+                    limpiarInterfaz();
+                }
+            } catch (e) {
+                alert("Error al canjear");
+            }
+            btn.disabled = false;
+            btn.innerText = "CONFIRMAR ENTREGA DE PREMIO";
+        }
+    </script>
+</body>
+</html>
