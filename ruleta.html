@@ -3,12 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ruleta de Premios</title>
+    <title>Ruleta de Premios - Tienda Jainer</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; text-align: center; background: #f4f4f9; margin: 0; padding-bottom: 50px; }
+        
+        /* Barra de usuario unificada */
         .user-info { background: #333; color: white; padding: 10px 15px; display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap; gap: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .user-info span { font-size: 0.9em; }
+        
+        /* Contenedor de botones de acción */
         .action-btns { display: flex; gap: 8px; align-items: center; }
-        .btn-nav { padding: 6px 12px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.85em; transition: 0.3s; }
+        
+        /* Estilos de botones de la barra */
+        .btn-nav { padding: 8px 14px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.85em; transition: 0.3s; text-decoration: none; }
         .btn-admin { background: #007bff; color: white; }
         .btn-staff { background: #28a745; color: white; }
         .btn-token { background: #6f42c1; color: white; }
@@ -20,21 +27,25 @@
         #canvas-ruleta { width: 100%; height: 100%; transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1); }
         .marker { position: absolute; top: 50%; right: -20px; transform: translateY(-50%); border-top: 15px solid transparent; border-bottom: 15px solid transparent; border-right: 30px solid #d9534f; z-index: 10; width:0; height:0; }
         
-        #btn-girar { background: #28a745; color: white; padding: 15px 30px; border: none; border-radius: 8px; font-size: 1.2em; cursor: pointer; box-shadow: 0 4px 0 #1e7e34; }
-        #btn-girar:disabled { background: #ccc; cursor: not-allowed; }
+        #btn-girar { background: #28a745; color: white; padding: 15px 40px; border: none; border-radius: 8px; font-size: 1.2em; cursor: pointer; box-shadow: 0 4px 0 #1e7e34; margin-top: 10px; }
+        #btn-girar:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; }
         
+        /* Tabla de Cupones */
         table { width: 100%; border-collapse: collapse; margin-top: 30px; font-size: 0.85em; }
         th, td { border: 1px solid #eee; padding: 12px 5px; }
-        th { background: #f8f9fa; }
+        th { background: #f8f9fa; color: #666; }
         
-        .cupon-id { font-family: monospace; font-weight: bold; color: #007bff; background: #eef6ff; padding: 3px 6px; border-radius: 4px; border: 1px dashed #007bff; }
-        .info-txt { font-size: 0.85em; color: #666; font-style: italic; max-width: 150px; }
-        
-        .vence-ok { color: #28a745; font-weight: bold; }
-        .vence-espera { color: #fd7e14; font-weight: bold; }
-        .vence-alerta { color: #d9534f; font-weight: bold; }
+        /* Estilo de ID de Cupón y Detalles */
+        .cupon-id { font-family: 'Courier New', monospace; font-weight: bold; color: #007bff; background: #eef6ff; padding: 3px 6px; border-radius: 5px; border: 1px dashed #007bff; }
+        .info-txt { font-size: 0.8em; color: #777; font-style: italic; }
+
+        /* Colores de Vigencia */
+        .vence-ok { color: #28a745; font-weight: bold; }      /* Verde > 2 días */
+        .vence-espera { color: #fd7e14; font-weight: bold; }  /* Naranja <= 2 días */
+        .vence-alerta { color: #d9534f; font-weight: bold; }  /* Rojo = 0 días o vencido */
 
         .btn-regalar { background: #17a2b8; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 0.85em; font-weight: bold; }
+        .btn-regalar:hover { background: #138496; }
     </style>
 </head>
 <body>
@@ -42,6 +53,7 @@
 <div class="user-info">
     <span><b>ID:</b> <span id="u-id"></span></span>
     <span><b>Hola,</b> <span id="u-name"></span></span>
+    
     <div class="action-btns">
         <button id="btn-admin-link" class="btn-nav btn-admin" onclick="location.href='admin.html'" style="display:none">Admin</button>
         <button id="btn-validar-link" class="btn-nav btn-staff" onclick="location.href='validar.html'" style="display:none">Validar</button>
@@ -56,7 +68,7 @@
         <canvas id="canvas-ruleta" width="300" height="300"></canvas>
     </div>
     <button id="btn-girar" onclick="iniciarGiro()" disabled>Cargando...</button>
-    <p id="mensaje-estado"></p>
+    <p id="mensaje-estado" style="font-weight: bold; color: #d9534f; margin-top: 10px;"></p>
 
     <h3>Mis Cupones</h3>
     <table id="lista-cupones">
@@ -74,15 +86,20 @@
 </div>
 
 <script>
+    // --- CONFIGURACIÓN ---
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyY2avo8Y55W28Fxpjy2UZBb_SwIRBcbiGzS5uV0SLEX0VArFaLYblt9gkYP2mqF0h2/exec";
+    
     const uId = localStorage.getItem('userId');
     const uName = localStorage.getItem('usuario');
     const uRol = localStorage.getItem('rol');
 
+    // Protección de sesión
     if (!localStorage.getItem('sesionActiva')) window.location.href = "index.html";
+    
     document.getElementById('u-id').innerText = uId;
     document.getElementById('u-name').innerText = uName;
 
+    // Mostrar botones según el rol del usuario
     if (uRol === 'ADMIN' || uRol === 'STAFF') {
         document.getElementById('btn-token-link').style.display = 'inline-block';
         document.getElementById('btn-validar-link').style.display = 'inline-block';
@@ -92,16 +109,27 @@
     let listaPremios = [];
     const colores = ["#f1c40f", "#e67e22", "#e74c3c", "#9b59b6", "#3498db", "#2ecc71", "#1abc9c", "#34495e"];
 
-    function cerrar() { if(confirm("¿Salir?")) { localStorage.clear(); window.location.href = "index.html"; } }
+    function cerrar() { 
+        if(confirm("¿Cerrar sesión?")) {
+            localStorage.clear(); 
+            window.location.href = "index.html"; 
+        }
+    }
 
     async function generarToken() {
-        if(!confirm("¿Generar nuevo token?")) return;
-        const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'create_token', username: uName }) });
-        const data = await res.json();
-        if(data.success) alert("TOKEN: " + data.token);
+        if(!confirm("¿Generar un nuevo token de registro?")) return;
+        try {
+            const res = await fetch(SCRIPT_URL, { 
+                method: 'POST', 
+                body: JSON.stringify({ action: 'create_token', username: uName }) 
+            });
+            const data = await res.json();
+            if(data.success) alert("TOKEN GENERADO:\n\n" + data.token);
+        } catch (e) { alert("Error de conexión"); }
     }
 
     function dibujar(premios) {
+        if (!premios || premios.length === 0) return;
         const ctx = document.getElementById('canvas-ruleta').getContext('2d');
         const arco = (2 * Math.PI) / premios.length;
         ctx.clearRect(0, 0, 300, 300);
@@ -114,37 +142,53 @@
     }
 
     async function cargar() {
-        const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'get_user_data', userId: uId }) });
-        const data = await res.json();
-        
-        if (data.premiosRuleta) {
-            listaPremios = data.premiosRuleta;
-            dibujar(listaPremios);
-            document.getElementById('btn-girar').innerText = "GIRAR";
-            if (!data.yaGiroHoy) document.getElementById('btn-girar').disabled = false;
-        }
-        if (data.yaGiroHoy) document.getElementById('mensaje-estado').innerText = "Ya giraste hoy.";
-
-        if (data.cupones) data.cupones.sort((a, b) => new Date(a.vencimiento) - new Date(b.vencimiento));
-
-        const tbody = document.querySelector('#lista-cupones tbody');
-        tbody.innerHTML = data.cupones.map(c => {
-            const dias = Math.ceil((new Date(c.vencimiento) - new Date()) / (1000*60*60*24));
-            let clase = dias > 2 ? 'vence-ok' : (dias > 0 ? 'vence-espera' : 'vence-alerta');
-            let btnRegalo = c.estado === 'ACTIVO' ? `<button class="btn-regalar" onclick="regalar('${c.id}')">Regalar</button>` : 'USADO';
+        try {
+            // ENVIAMOS userId Y username (CRÍTICO PARA EL BLOQUEO DIARIO)
+            const res = await fetch(SCRIPT_URL, { 
+                method: 'POST', 
+                body: JSON.stringify({ action: 'get_user_data', userId: uId, username: uName }) 
+            });
+            const data = await res.json();
             
-            return `<tr>
-                <td><span class="cupon-id">${c.id}</span></td>
-                <td>${c.premio}</td>
-                <td class="info-txt">${c.info}</td>
-                <td class="${clase}">${dias > 0 ? dias + ' d' : '¡Hoy!'}</td>
-                <td>${btnRegalo}</td>
-            </tr>`;
-        }).join('') || "<tr><td colspan='5'>Sin cupones</td></tr>";
+            if (data.premiosRuleta) {
+                listaPremios = data.premiosRuleta;
+                dibujar(listaPremios);
+                document.getElementById('btn-girar').innerText = "GIRAR";
+                
+                // Si no ha girado hoy (según los logs), habilitamos el botón
+                if (!data.yaGiroHoy) {
+                    document.getElementById('btn-girar').disabled = false;
+                } else {
+                    document.getElementById('mensaje-estado').innerText = "Ya giraste hoy. ¡Vuelve mañana!";
+                }
+            }
+
+            // Ordenar cupones por fecha de vencimiento (los que vencen antes van arriba)
+            if (data.cupones) {
+                data.cupones.sort((a, b) => new Date(a.vencimiento) - new Date(b.vencimiento));
+            }
+
+            const tbody = document.querySelector('#lista-cupones tbody');
+            tbody.innerHTML = data.cupones.map(c => {
+                const diff = new Date(c.vencimiento) - new Date();
+                const dias = Math.ceil(diff / (1000 * 60 * 60 * 24));
+                
+                let claseV = dias > 2 ? "vence-ok" : (dias > 0 ? "vence-espera" : "vence-alerta");
+                let btnAccion = c.estado === 'ACTIVO' ? `<button class="btn-regalar" onclick="regalar('${c.id}')">Regalar</button>` : '<b>USADO</b>';
+
+                return `<tr>
+                    <td><span class="cupon-id">${c.id}</span></td>
+                    <td>${c.premio}</td>
+                    <td class="info-txt">${c.info}</td>
+                    <td class="${claseV}">${dias > 0 ? dias + ' d' : '¡Hoy!'}</td>
+                    <td>${btnAccion}</td>
+                </tr>`;
+            }).join('') || "<tr><td colspan='5'>No tienes cupones aún</td></tr>";
+        } catch (e) { console.error("Error al cargar:", e); }
     }
 
     async function regalar(cuponId) {
-        const targetId = prompt("Ingresa el ID del usuario destino:");
+        const targetId = prompt("Ingresa el ID del usuario al que le regalarás el cupón:");
         if (!targetId || targetId === uId) return;
 
         const res = await fetch(SCRIPT_URL, { 
@@ -160,15 +204,28 @@
         const g = 1800 + Math.floor(Math.random() * 360);
         document.getElementById('canvas-ruleta').style.transform = `rotate(${g}deg)`;
         document.getElementById('btn-girar').disabled = true;
+        document.getElementById('mensaje-estado').innerText = "¡Girando!...";
+        document.getElementById('mensaje-estado').style.color = "#28a745";
+        
         setTimeout(async () => {
             const idx = Math.floor(((360 - (g % 360)) % 360) / (360 / listaPremios.length));
             const p = listaPremios[idx];
-            const promesaGuardado = fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'save_prize', userId: uId, username: uName, prize: p }) });
-            alert("¡Ganaste: " + p + "!");
+            
+            // Enviamos la petición para guardar el premio
+            const promesaGuardado = fetch(SCRIPT_URL, { 
+                method: 'POST', 
+                body: JSON.stringify({ action: 'save_prize', userId: uId, username: uName, prize: p }) 
+            });
+
+            alert("¡FELICIDADES! Ganaste: " + p);
+            
+            // Esperamos que el servidor confirme y recargamos
             await promesaGuardado;
             location.reload();
         }, 4000);
     }
+    
+    // Iniciar la carga al abrir la página
     cargar();
 </script>
 </body>

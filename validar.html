@@ -24,13 +24,14 @@
         #info-cupon { display: none; background: #f8f9fa; border: 1px solid #eee; border-radius: 12px; padding: 20px; text-align: left; margin-top: 20px; animation: fadeIn 0.4s; }
         .info-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f1f1f1; }
         .info-label { font-weight: bold; color: #555; }
-        .info-value { color: #000; }
+        .info-value { color: #000; text-align: right; }
         
-        .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 0.8em; font-weight: bold; }
+        .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 0.8em; font-weight: bold; display: inline-block; }
         .status-activo { background: #e6ffed; color: #28a745; border: 1px solid #28a745; }
         .status-usado { background: #fff5f5; color: #d9534f; border: 1px solid #d9534f; }
 
         .back-btn { margin-top: 20px; display: inline-block; color: #666; text-decoration: none; font-weight: bold; }
+        .back-btn:hover { color: var(--primary); }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
@@ -38,22 +39,21 @@
 
     <div class="card">
         <h2>Validar Premio</h2>
-        <p class="instrucciones">Busca el cupón para verificar los datos antes de entregarlo.</p>
+        <p class="instrucciones">Busca el código del cupón para verificar los datos antes de aplicar el descuento o entregar el producto.</p>
         
-        <input type="text" id="inputCupon" placeholder="CUP-XXXXXX">
+        <input type="text" id="inputCupon" placeholder="Ej. CUP-123456">
         <button id="btnBuscar" class="btn btn-search" onclick="buscarCupon()">BUSCAR CUPÓN</button>
 
-        <!-- Ficha de Datos (Oculta por defecto) -->
         <div id="info-cupon">
             <div class="info-row"><span class="info-label">ID Cupón:</span> <span id="res-id" class="info-value"></span></div>
             <div class="info-row"><span class="info-label">Usuario:</span> <span id="res-user" class="info-value"></span></div>
             <div class="info-row"><span class="info-label">Premio:</span> <span id="res-premio" class="info-value" style="color:var(--primary); font-weight:bold;"></span></div>
             <div class="info-row"><span class="info-label">Adquirido:</span> <span id="res-fecha" class="info-value"></span></div>
-            <div class="info-row"><span class="info-label">Vence:</span> <span id="res-vence" class="info-value"></span></div>
+            <div class="info-row"><span class="info-label">Vencimiento:</span> <span id="res-vence" class="info-value"></span></div>
             <div class="info-row"><span class="info-label">Estado:</span> <span id="res-status" class="status-badge"></span></div>
             
             <div style="margin-top: 20px;">
-                <button id="btnCanjear" class="btn btn-redeem" onclick="canjearCupon()">CONFIRMAR ENTREGA DE PREMIO</button>
+                <button id="btnCanjear" class="btn btn-redeem" onclick="canjearCupon()">CONFIRMAR ENTREGA / CANJE</button>
             </div>
         </div>
 
@@ -63,12 +63,16 @@
     </div>
 
     <script>
+        // --- CONFIGURACIÓN ---
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyY2avo8Y55W28Fxpjy2UZBb_SwIRBcbiGzS5uV0SLEX0VArFaLYblt9gkYP2mqF0h2/exec";
         
-        // SEGURIDAD: Solo Staff y Admin
+        // SEGURIDAD: Validar que solo STAFF y ADMIN puedan estar aquí
         const rol = localStorage.getItem('rol');
-        const trabajador = localStorage.getItem('usuario');
-        if (rol !== 'ADMIN' && rol !== 'STAFF') window.location.href = "ruleta.html";
+        const trabajador = localStorage.getItem('usuario'); // Quien está usando el sistema ahora mismo
+        
+        if (rol !== 'ADMIN' && rol !== 'STAFF') {
+            window.location.href = "ruleta.html"; // Si es un cliente normal, lo devuelve a la ruleta
+        }
 
         function limpiarInterfaz() {
             document.getElementById('info-cupon').style.display = 'none';
@@ -78,12 +82,15 @@
 
         async function buscarCupon() {
             const id = document.getElementById('inputCupon').value.trim();
-            if (!id) return alert("Ingresa un código");
+            if (!id) {
+                alert("Por favor, ingresa un código de cupón.");
+                return;
+            }
 
             limpiarInterfaz();
             const btn = document.getElementById('btnBuscar');
             btn.disabled = true;
-            btn.innerText = "Buscando...";
+            btn.innerText = "Buscando en la base de datos...";
 
             try {
                 const res = await fetch(SCRIPT_URL, {
@@ -93,7 +100,7 @@
                 const data = await res.json();
 
                 if (data.success) {
-                    // Llenar Ficha
+                    // Llenar Ficha con los datos del servidor
                     document.getElementById('res-id').innerText = data.datos.id;
                     document.getElementById('res-user').innerText = data.datos.duenio;
                     document.getElementById('res-premio').innerText = data.datos.premio;
@@ -102,28 +109,31 @@
                     
                     const statusBadge = document.getElementById('res-status');
                     statusBadge.innerText = data.datos.estado;
-                    statusBadge.className = data.datos.estado === 'ACTIVO' ? 'status-badge status-activo' : 'status-badge status-usado';
+                    
+                    // Cambiar color según el estado
+                    if (data.datos.estado === 'ACTIVO') {
+                        statusBadge.className = 'status-badge status-activo';
+                        document.getElementById('btnCanjear').style.display = 'block'; // Mostrar botón de canje
+                    } else {
+                        statusBadge.className = 'status-badge status-usado';
+                    }
 
                     document.getElementById('info-cupon').style.display = 'block';
-                    
-                    // Mostrar botón de canje solo si está activo
-                    if (data.datos.estado === 'ACTIVO') {
-                        document.getElementById('btnCanjear').style.display = 'block';
-                    }
                 } else {
-                    document.getElementById('mensaje-global').style.color = "red";
+                    document.getElementById('mensaje-global').style.color = "#d9534f"; // Rojo
                     document.getElementById('mensaje-global').innerText = data.message;
                 }
             } catch (e) {
-                alert("Error de conexión");
+                alert("Error de conexión con el servidor. Revisa tu internet.");
             }
+            
             btn.disabled = false;
             btn.innerText = "BUSCAR CUPÓN";
         }
 
         async function canjearCupon() {
             const id = document.getElementById('res-id').innerText;
-            if (!confirm("¿Seguro que deseas marcar este premio como ENTREGADO?")) return;
+            if (!confirm(`¿Seguro que deseas marcar el cupón ${id} como ENTREGADO? Esta acción no se puede deshacer.`)) return;
 
             const btn = document.getElementById('btnCanjear');
             btn.disabled = true;
@@ -135,21 +145,24 @@
                     body: JSON.stringify({ 
                         action: 'redeem_coupon', 
                         cuponId: id, 
-                        username: trabajador 
+                        username: trabajador // Enviamos el nombre del cajero/admin que hizo la validación
                     })
                 });
                 const data = await res.json();
                 
                 alert(data.message);
+                
                 if (data.success) {
+                    // Resetear la pantalla para el siguiente cliente
                     document.getElementById('inputCupon').value = "";
                     limpiarInterfaz();
                 }
             } catch (e) {
-                alert("Error al canjear");
+                alert("Ocurrió un error al intentar canjear el cupón.");
             }
+            
             btn.disabled = false;
-            btn.innerText = "CONFIRMAR ENTREGA DE PREMIO";
+            btn.innerText = "CONFIRMAR ENTREGA / CANJE";
         }
     </script>
 </body>
