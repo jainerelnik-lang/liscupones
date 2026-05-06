@@ -106,6 +106,10 @@
         .vence-alerta { color: #d9534f; font-weight: bold; }
 
         .btn-regalar { background: #17a2b8; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85em; font-weight: bold; }
+        
+        /* Estilo para cupón usado */
+        .fila-usado { background-color: #f9f9f9; color: #aaa; }
+        .fila-usado .cupon-id { color: #aaa; border-color: #ccc; background: #f0f0f0; }
     </style>
 </head>
 <body>
@@ -187,7 +191,6 @@
         } catch (e) { alert("Error de conexión"); }
     }
 
-    // MODIFICACIÓN: Letras más grandes y mejor visibilidad
     function dibujar(premios) {
         if (!premios || premios.length === 0) return;
         const canvas = document.getElementById('canvas-ruleta');
@@ -198,7 +201,6 @@
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
         premios.forEach((p, i) => {
-            // Dibujar Tajada
             ctx.beginPath(); 
             ctx.fillStyle = colores[i % colores.length]; 
             ctx.moveTo(centro, centro);
@@ -207,12 +209,10 @@
             ctx.strokeStyle = "rgba(255,255,255,0.2)";
             ctx.stroke();
 
-            // Dibujar Texto
             ctx.save(); 
             ctx.translate(centro, centro); 
             ctx.rotate(i * arco + arco / 2);
             ctx.fillStyle = "white"; 
-            // Aumento de fuente de 11px a 16px para móvil
             ctx.font = "bold 16px Arial"; 
             ctx.textAlign = "right"; 
             ctx.shadowColor = "rgba(0,0,0,0.5)";
@@ -221,7 +221,6 @@
             ctx.restore();
         });
 
-        // Círculo central estético
         ctx.beginPath();
         ctx.fillStyle = "white";
         ctx.arc(centro, centro, 15, 0, 2 * Math.PI);
@@ -249,22 +248,33 @@
             }
 
             if (data.cupones) {
-                data.cupones.sort((a, b) => new Date(a.vencimiento) - new Date(b.vencimiento));
+                // NUEVA LÓGICA DE ORDENAMIENTO:
+                // 1. Activos primero, Usados después.
+                // 2. Dentro de los activos, ordenar por fecha de vencimiento.
+                data.cupones.sort((a, b) => {
+                    if (a.estado === 'ACTIVO' && b.estado !== 'ACTIVO') return -1;
+                    if (a.estado !== 'ACTIVO' && b.estado === 'ACTIVO') return 1;
+                    
+                    // Si ambos tienen el mismo estado, ordenar por fecha
+                    return new Date(a.vencimiento) - new Date(b.vencimiento);
+                });
             }
 
             const tbody = document.querySelector('#lista-cupones tbody');
             tbody.innerHTML = data.cupones.map(c => {
                 const diff = new Date(c.vencimiento) - new Date();
                 const dias = Math.ceil(diff / (1000 * 60 * 60 * 24));
+                const esActivo = c.estado === 'ACTIVO';
                 
                 let claseV = dias > 2 ? "vence-ok" : (dias > 0 ? "vence-espera" : "vence-alerta");
-                let btnAccion = c.estado === 'ACTIVO' ? `<button class="btn-regalar" onclick="regalar('${c.id}')">Regalar</button>` : '<b>USADO</b>';
+                let btnAccion = esActivo ? `<button class="btn-regalar" onclick="regalar('${c.id}')">Regalar</button>` : '<b>USADO</b>';
+                let claseFila = esActivo ? '' : 'class="fila-usado"';
 
-                return `<tr>
+                return `<tr ${claseFila}>
                     <td><span class="cupon-id">${c.id}</span></td>
                     <td><b>${c.premio}</b></td>
                     <td class="info-txt">${c.info}</td>
-                    <td class="${claseV}">${dias > 0 ? dias + ' d' : '¡Hoy!'}</td>
+                    <td class="${esActivo ? claseV : ''}">${dias > 0 ? dias + ' d' : '¡Hoy!'}</td>
                     <td>${btnAccion}</td>
                 </tr>`;
             }).join('') || "<tr><td colspan='5'>No tienes cupones aún</td></tr>";
