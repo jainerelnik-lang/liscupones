@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guía VIP - Tienda Jainer</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --primary: #007bff; --success: #28a745; --dark: #333; --bg: #f4f4f9; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #444; line-height: 1.6; margin: 0; padding: 0; }
+        
+        header { background: var(--dark); color: white; padding: 40px 20px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        header h1 { margin: 0; font-size: 1.8em; letter-spacing: 1px; }
+        header p { margin: 10px 0 0; opacity: 0.8; font-size: 1em; }
+
+        .container { max-width: 800px; margin: -30px auto 50px; padding: 0 20px; }
+        
+        .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 25px; }
+        
+        .section-title { display: flex; align-items: center; gap: 15px; color: var(--dark); border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px; }
+        .section-title i { color: var(--primary); font-size: 1.5em; }
+
+        .step { display: flex; gap: 20px; margin-bottom: 20px; }
+        .step-num { background: var(--primary); color: white; min-width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        
+        .feature-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; }
+        .feature-item { background: #f8f9fa; padding: 15px; border-radius: 10px; border-left: 4px solid var(--success); }
+        .feature-item h4 { margin: 0 0 5px; color: var(--dark); }
+
+        .alert-box { background: #fff8e1; border: 1px solid #ffe082; padding: 15px; border-radius: 10px; margin: 15px 0; color: #856404; font-size: 0.95em; }
+
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; font-weight: bold; }
+        .badge-green { background: #e6ffed; color: #28a745; }
+        .badge-blue { background: #eef6ff; color: #007bff; }
+
+        .btn-back { display: block; width: 100%; max-width: 200px; margin: 30px auto; text-align: center; background: var(--dark); color: white; padding: 12px; border-radius: 8px; text-decoration: none; font-weight: bold; transition: 0.3s; }
+        .btn-back:hover { background: #000; }
+
+        @media (max-width: 600px) { .feature-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1><i class="fas fa-crown"></i> CLUB VIP</h1>
+    <p>Guía de uso y beneficios exclusivos</p>
+</header>
+
+<div class="container">
+    
+    <div class="card">
+        <div class="section-title">
+            <i class="fas fa-star"></i>
+            <h3>¿Qué es la Membresía Anual?</h3>
+        </div>
+        <p>Por solo <b>240 córdobas al año</b>, te conviertes en un cliente prioritario con beneficios que nadie más tiene:</p>
+        <div class="feature-grid">
+            <div class="feature-item">
+                <h4><i class="fas fa-tags"></i> Precio Mayorista</h4>
+                <p>Lleva 1 sola prenda a precio de tercio (mayoreo) sin mínimo de compra.</p>
+            </div>
+            <div class="feature-item">
+                <h4><i class="fas fa-headset"></i> Prioridad VIP</h4>
+                <p>Tus consultas en WhatsApp pasan al primer lugar de nuestra fila de atención.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="section-title">
+            <i class="fas fa-key"></i>
+            <h3>Cómo Empezar</h3>
+        </div>
+        <div class="step">
+            <div class="step-num">1</div>
+            <div>
+                <strong>Obtén tu Token:</strong> Al pagar tu membresía en tienda, te entregaremos un código único (Token).
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-num">2</div>
+            <div>
+                <strong>Regístrate:</strong> Entra a nuestra app, selecciona "¿Eres nuevo?" y usa tu Token para crear tu usuario.
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-num">3</div>
+            <div>
+                <strong>Gira y Gana:</strong> ¡Ya puedes entrar y hacer tu primer giro en la ruleta!
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="section-title">
+            <i class="fas fa-dharmachakra"></i>
+            <h3>La Ruleta Diaria</h3>
+        </div>
+        <p>Como socio VIP, tienes <b>1 giro cada 24 horas</b>. Solo presiona el botón "GIRAR" y el premio se guardará automáticamente en tu cuenta.</p>
+        <p><small>* El sistema bloquea el giro por historial, así que asegúrate de aprovechar tu oportunidad diaria.</small></p>
+    </div>
+
+    <div class="card">
+        <div class="section-title">
+            <i class="fas fa-ticket-alt"></i>
+            <h3>Gestión de Cupones</h3>
+        </div>
+        <p>Todos los premios que ganes se irán <b>acumulando en tu lista</b>. No es necesario que los uses el mismo día que los ganas; puedes guardarlos para cuando decidas visitarnos.</p>
+        
+        <div class="alert-box">
+            <i class="fas fa-exclamation-triangle"></i> 
+            <strong>¡Atención con la vigencia!</strong> Aunque tus cupones se acumulan, cada uno tiene una fecha de vencimiento individual. Si el cupón llega a su fecha límite, desaparecerá del sistema y no podrá ser canjeado.
+        </div>
+
+        <p>Fíjate en los colores de la tabla para priorizar tus premios:</p>
+        <ul>
+            <li><span class="badge badge-green">VERDE:</span> Tienes tiempo suficiente para usarlo.</li>
+            <li><span class="badge" style="background:#fff5f5; color:#d9534f">ROJO:</span> ¡Cuidado! Vence pronto o hoy mismo.</li>
+        </ul>
+        <hr>
+        <h4><i class="fas fa-gift"></i> ¿Cómo regalar un cupón?</h4>
+        <p>Puedes enviar un premio acumulado a un amigo:</p>
+        <ol>
+            <li>Dale clic al botón azul <b>"Regalar"</b>.</li>
+            <li>Ingresa el <b>ID de usuario</b> de la persona que lo recibirá.</li>
+            <li>El cupón se transferirá con su misma fecha de vencimiento original.</li>
+        </ol>
+    </div>
+
+    <div class="card">
+        <div class="section-title">
+            <i class="fas fa-store-alt"></i>
+            <h3>Cómo Canjear en Tienda</h3>
+        </div>
+        <p>Para usar tus cupones acumulados, muéstrale el código <span class="badge badge-blue">CUP-XXXXXX</span> a nuestro equipo. Ellos validarán el código y aplicarán tu beneficio al instante.</p>
+    </div>
+
+    <a href="index.html" class="btn-back">VOLVER A LA APP</a>
+</div>
+
+</body>
+</html>
