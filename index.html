@@ -14,6 +14,25 @@
         .hidden { display: none; }
         #mensaje { margin-top: 15px; font-weight: bold; font-size: 0.9em; min-height: 20px; }
         .info-text { font-size: 0.8em; color: #666; margin: 10px 0; text-align: left; }
+        
+        /* Estilo para el nuevo botón de instrucciones */
+        .btn-guia {
+            display: inline-block;
+            width: 100%;
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #17a2b8; /* Azul claro para diferenciarlo del verde */
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 0.9em;
+            box-sizing: border-box;
+            transition: 0.3s;
+        }
+        .btn-guia:hover {
+            background-color: #138496;
+        }
     </style>
 </head>
 <body>
@@ -21,7 +40,6 @@
 <div class="container">
     <h2 id="titulo">Iniciar Sesión</h2>
     
-    <!-- Formulario de Login -->
     <div id="loginForm">
         <input type="text" id="loginUser" placeholder="Nombre de usuario">
         <input type="password" id="loginPass" placeholder="Contraseña">
@@ -29,7 +47,6 @@
         <span class="toggle-link" onclick="toggleForm('registro')">¿Eres nuevo? Regístrate con tu Token</span>
     </div>
 
-    <!-- Formulario de Registro (RECUPERADO) -->
     <div id="registroForm" class="hidden">
         <input type="text" id="regUser" placeholder="Elige un usuario">
         <input type="password" id="regPass" placeholder="Crea tu contraseña">
@@ -46,6 +63,9 @@
     </div>
 
     <div id="mensaje"></div>
+
+    <a href="instrucciones.html" class="btn-guia">ℹ️ ¿Cómo funciona el Club VIP?</a>
+
 </div>
 
 <script src="script.js"></script>
